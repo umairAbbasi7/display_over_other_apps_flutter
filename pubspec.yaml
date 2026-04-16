@@ -1,7 +1,9 @@
 name: display_over_other_apps_flutter
 description: "Android Flutter plugin for draggable overlay bubble above other apps."
-version: 0.0.1
-homepage:
+version: 0.0.2
+homepage: https://github.com/umairAbbasi7/display_over_other_apps_flutter
+repository: https://github.com/umairAbbasi7/display_over_other_apps_flutter
+issue_tracker: https://github.com/umairAbbasi7/display_over_other_apps_flutter/issues
 
 environment:
   sdk: ^3.11.0

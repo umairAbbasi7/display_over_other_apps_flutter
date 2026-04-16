@@ -1,46 +1,42 @@
 # display_over_other_apps_flutter
 
-Android Flutter plugin to display a draggable floating overlay over other apps.
-
-## Features (v1)
-
-- Permission check/request
-- Show/close overlay
-- Running status check
-- Tap callback via event stream
-- Drag/move overlay
-- Drag-to-dismiss using close target
+Android Flutter plugin to show a draggable floating bubble over other apps.
 
 ## Platform support
 
 - Android only
 
-## Usage
+## What this package provides
 
-```dart
-final plugin = DisplayOverOtherAppsFlutter();
+- Check overlay permission
+- Open overlay permission settings
+- Show and close floating overlay bubble
+- Check whether overlay service is running
+- Stream overlay events (`tap`, `dismissed`, `unknown`)
+- Drag-to-move bubble and drag-to-dismiss target
 
-final hasPermission = await plugin.hasPermission();
-if (!hasPermission) {
-  await plugin.requestPermission();
-}
+## Installation
 
-await plugin.showOverlay();
+Add dependency:
 
-DisplayOverOtherAppsFlutter.events.listen((event) {
-  // event.type => tap / dismissed / unknown
-});
+```yaml
+dependencies:
+  display_over_other_apps_flutter: ^0.0.1
 ```
 
-`requestPermission()` opens Android's overlay settings page and resolves after
-the user returns to the app with the latest permission state.
+Import:
 
-## Android setup (host app)
+```dart
+import 'package:display_over_other_apps_flutter/display_over_other_apps_flutter.dart';
+```
 
-This package uses manual Android manifest setup. Add the following to your app's
-`android/app/src/main/AndroidManifest.xml`.
+## Android setup (required)
 
-Add these permissions under `<manifest>`:
+This package uses manual manifest setup. In your app, edit:
+
+`android/app/src/main/AndroidManifest.xml`
+
+Add these under `<manifest>`:
 
 ```xml
 <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
@@ -48,7 +44,7 @@ Add these permissions under `<manifest>`:
 <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
 ```
 
-Add this service under `<application>`:
+Add this under `<application>`:
 
 ```xml
 <service
@@ -61,11 +57,57 @@ Add this service under `<application>`:
 </service>
 ```
 
-If these manifest entries are missing, `showOverlay()` will fail.
+If these entries are missing, `showOverlay()` will return `false`.
 
-## Notes
+## Quick start
 
-- Overlay support is Android-only.
-- The overlay is managed through a foreground service, so users will see an
-  ongoing notification while the overlay is active.
+```dart
+final plugin = DisplayOverOtherAppsFlutter();
+
+Future<void> showBubble() async {
+  final granted = await plugin.hasPermission();
+  if (!granted) {
+    final permissionAfterSettings = await plugin.requestPermission();
+    if (!permissionAfterSettings) return;
+  }
+
+  await plugin.showOverlay();
+}
+
+final sub = DisplayOverOtherAppsFlutter.events.listen((event) {
+  switch (event.type) {
+    case OverlayEventType.tap:
+      // Bubble tapped
+      break;
+    case OverlayEventType.dismissed:
+      // Bubble closed
+      break;
+    case OverlayEventType.unknown:
+      break;
+  }
+});
+```
+
+## API
+
+- `hasPermission()` -> returns current overlay permission state
+- `requestPermission()` -> always opens overlay settings and resolves when user returns
+- `showOverlay()` -> starts service and shows bubble (`true` on success)
+- `closeOverlay()` -> closes bubble/service (`true` on success)
+- `isOverlayRunning()` -> returns whether overlay service is running
+
+## Behavior notes
+
+- Bubble icon uses the host app icon (`applicationInfo.icon`).
+- Tapping bubble opens host app launch activity.
+- Overlay runs as foreground service, so users see an ongoing notification.
+
+## Common integration issues
+
+- `showOverlay()` returns `false`:
+  - Missing manifest permissions or service declaration
+  - Overlay permission not granted by user
+- `requestPermission()` returns `false`:
+  - User denied permission in settings
+  - No active host activity when request was made
 
